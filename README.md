@@ -4,7 +4,7 @@ ipl-tools
 Installation
 ------------
 
-    npm install commander yaml config ntwitter redis
+    npm install commander yaml config ntwitter hiredis redis socket.io
 
 Booting redis
 -------------
@@ -15,4 +15,10 @@ Booting node
 -----------
 
     # development
-    node ipl_streamer.js
+    node ipl_server.js
+
+Usage
+-----
+
+    http://localhost:8080/foo
+    http://localhost:8080/twitter
