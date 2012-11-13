@@ -15,5 +15,4 @@ Booting node
 -----------
 
     # development
-    cd poll
-    node poll_service.js
+    node ipl_streamer.js
