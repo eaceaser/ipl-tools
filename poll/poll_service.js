@@ -46,7 +46,7 @@ var handler = {
           var option = options[i];
           if (text.match(option)) {
             var key = keyword+":"+option;
-            redisClient.incr(keyword, function(err, rv) {
+            redisClient.incr(key, function(err, rv) {
               io.sockets.emit(keyword, { option: option, count: rv });
             });
           }
