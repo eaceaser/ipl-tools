@@ -73,6 +73,7 @@ var handler = {
 };
 
 app.post('/track', function(req, res) {
+  console.log(req.body);
   var kw = req.body.keyword;
   var options = req.body.option;
 
@@ -83,7 +84,7 @@ app.post('/track', function(req, res) {
 });
 
 app.get('/results', function(req, res) {
-  var keyword = req.param.keyword;
+  var keyword = req.query.keyword;
   handler.stats(keyword, function(count) {
     console.log(count);
   });
