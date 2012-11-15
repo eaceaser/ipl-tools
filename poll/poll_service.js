@@ -92,24 +92,3 @@ app.get('/results', function(req, res) {
 });
 
 server.listen(8085);
-
-// redisSubscriber.on('connect', function() {
-//   redisSubscriber.subscribe('tracker');
-//   console.log("Subscribed to 'tracker' channel. Waiting for messages.");
-// });
-// 
-// 
-// 
-// redisSubscriber.on('message', function (channel, message) {
-//   switch(channel) {
-//   case 'tracker':
-//     obj = JSON.parse(message);
-//     fn = handler[obj.command];
-//     if (typeof fn === 'function') {
-//       fn(obj);
-//     } else {
-//       console.log("Unknown command: %s", obj.command);
-//     }
-//     break;
-//   }
-// });

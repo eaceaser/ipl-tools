@@ -17,10 +17,7 @@ if (cli.track) {
     process.exit(0);
   });
 } else if (cli.status) {
-  rest.get('http://localhost:8085/results', { query: { 'keyword': '#yolo' } }).on('complete', function(data, response) {
-    console.log(data);
-    console.log(response);
-  });
+  rest.get('http://localhost:8085/results', { query: { 'keyword': '#yolo' } }).on('complete', function(data, response) { });
 } else {
   cli.help();
   process.exit(1);
