@@ -50,7 +50,7 @@ var handler = {
             var opt = new String(option);
             redisClient.incr(key, function(err, rv) {
               for (l in handler.listeners) {
-                handler.listeners[l]({keyword: keyword, option: option, count: rv});
+                handler.listeners[l]({keyword: keyword, option: opt, count: rv});
               }
             });
           }
