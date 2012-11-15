@@ -27,6 +27,7 @@ redisSubscriber.on('error', function (error) {
 
 var handler = {
   streams: [],
+  listeners: [],
   twitter: twitter,
 
   track: function(keyword, options) {
@@ -46,8 +47,11 @@ var handler = {
           var option = options[i];
           if (text.match(option)) {
             var key = keyword+":"+option;
+            var opt = new String(option);
             redisClient.incr(key, function(err, rv) {
-              io.sockets.emit(keyword, { option: option, count: rv });
+              for (l in handler.listeners) {
+                handler.listeners[l]({keyword: keyword, option: option, count: rv});
+              }
             });
           }
         }
@@ -71,6 +75,16 @@ var handler = {
     });
   }
 };
+
+io.sockets.on('connection', function (socket) {
+  handler.listeners[socket] = function (message) {
+    socket.emit('vote', message);
+  };
+
+  socket.on('disconnect', function() {
+    delete handler.listeners[socket]
+  });
+});
 
 app.post('/track', function(req, res) {
   console.log(req.body);

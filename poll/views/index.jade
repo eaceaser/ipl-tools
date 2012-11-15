@@ -2,5 +2,11 @@
 html
   head
     title Poll Test App
+    script(src='/socket.io/socket.io.js')
+    script(type='text/javascript')
+      var socket = io.connect("http://localhost:8085");
+      socket.on('vote', function(data) {
+        console.log(data);
+      });
   body
     h1 Polls
