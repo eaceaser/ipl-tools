@@ -9,6 +9,7 @@ var CONFIG    = require('config')
 
 io.set('log level', 2);
 app.use(express.bodyParser());
+app.enable("jsonp callback");
 
 var twitter = new ntwitter({
   consumer_key: CONFIG.auth.consumer_key,
@@ -17,13 +18,7 @@ var twitter = new ntwitter({
   access_token_secret: CONFIG.auth.access_token_secret
 });
 
-var redisSubscriber = redis.createClient();
 var redisClient = redis.createClient();
-
-redisSubscriber.on('error', function (error) {
-  console.log(error);
-  process.exit(1);
-});
 
 var handler = {
   streams: [],
@@ -87,14 +82,15 @@ io.sockets.on('connection', function (socket) {
 });
 
 app.post('/track', function(req, res) {
-  console.log(req.body);
   var kw = req.body.keyword;
-  var options = req.body.option;
+  var options = req.body.option.filter(function(e, i, a) {
+    return e.length > 0;
+  });
 
   handler.track(kw, options);
 
   // TODO: Block until the twitter client establishes conn, return value as such.
-  res.send(200);
+  res.json("ok");
 });
 
 app.get('/results', function(req, res) {

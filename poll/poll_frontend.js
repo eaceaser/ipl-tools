@@ -7,10 +7,11 @@ var CONFIG  = require('config')
   , server  = http.createServer(app)
   , io      = require('socket.io').listen(server);
 
-app.set('view engine', 'jade');
+app.use(express.logger('dev'));
+app.use(express.static(__dirname + '/views'));
 
 app.get('/', function(req, res) {
-  res.render('index');
+  res.static('index.html');
 });
 
 console.log("Listening.");
