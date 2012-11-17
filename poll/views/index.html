@@ -37,19 +37,20 @@
         lastInput.removeClass("lastoption");
       }
 
-      function submitted() {
-        console.log("sup");
-
-      }
-
       function submitForm() {
         var data = $('#pollAdd').serialize();
-        console.log("submitting");
-        console.log(data);
-        $.post('http://localhost:8085/track?callback=submitted', $('#pollAd').serialize());
+        $.post('/track', data).success(function() {
+          $('#feedback').append('<div class="alert"><button type="button" class="close" data-dismiss="alert">x</button>Poll Successfully Added.</div>');
+          $('#formKeyword').val('');
+          $('#options').replaceWith('\
+          <div id="options">\
+            <input type="text" name="option" class="lastoption" onChange="checkIfTextExists();" placeholder="Add an Option">\
+            <div id="next"></div>\
+          </div>\
+          ');
+        });
         return false;
       }
-
     </script>
     <style>
       body { padding-top: 60px; }
@@ -70,13 +71,16 @@
     <div class='container'>
       <div class='row'>
         <div class="span3">
-          <form id='pollAdd' action="http://localhost:8085/track" method="post">
+          <div id='feedback'/></div>
+          <form id='pollAdd'>
             <fieldset>
               <legend>Add a Poll</legend>
-              <input type="text" name="keyword" placeholder="Twitter Keyword">
-              <input type="text" name="option" class="lastoption" onChange="checkIfTextExists();" placeholder="Add an Option">
-              <div id="next"></div>
-              <input type="submit" class="btn" value='Add Poll'>
+              <input type="text" id="formKeyword" name="keyword" placeholder="Twitter Keyword">
+              <div id="options">
+                <input type="text" name="option" class="lastoption" onChange="checkIfTextExists();" placeholder="Add an Option">
+                <div id="next"></div>
+              </div>
+              <button type='button' class="btn" onclick='submitForm()'>Add Poll</button>
             </fieldset>
           </form>
         </div>

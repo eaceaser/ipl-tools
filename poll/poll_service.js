@@ -8,7 +8,9 @@ var CONFIG    = require('config')
   , io        = require('socket.io').listen(server);
 
 io.set('log level', 2);
+app.use(express.logger('dev'));
 app.use(express.bodyParser());
+app.use(express.static(__dirname + '/views'));
 app.enable("jsonp callback");
 
 var twitter = new ntwitter({
@@ -99,6 +101,10 @@ app.get('/results', function(req, res) {
     console.log(count);
   });
   res.send(200);
+});
+
+app.get('/', function(req, res) {
+  res.static('index.html');
 });
 
 server.listen(8085);
