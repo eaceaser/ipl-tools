@@ -4,7 +4,7 @@ ipl-tools
 Installation
 ------------
 
-    npm install commander yaml config ntwitter redis
+    npm install commander yaml config ntwitter redis express
 
 Booting redis
 -------------
