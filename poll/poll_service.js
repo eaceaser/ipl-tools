@@ -11,7 +11,6 @@ io.set('log level', 2);
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.static(__dirname + '/views'));
-app.enable("jsonp callback");
 
 var twitter = new ntwitter({
   consumer_key: CONFIG.auth.consumer_key,
@@ -44,12 +43,13 @@ var handler = {
           var option = options[i];
           if (text.match(option)) {
             var key = keyword+":"+option;
-            var opt = new String(option);
-            redisClient.incr(key, function(err, rv) {
-              for (l in handler.listeners) {
-                handler.listeners[l]({keyword: keyword, option: opt, count: rv});
-              }
-            });
+            var x = function (k, opt) {
+              redisClient.incr(key, function(err, rv) {
+                for (l in handler.listeners) {
+                  handler.listeners[l]({keyword: k, option: opt, count: rv});
+                }
+              });
+            }(keyword, option);
           }
         }
       });
