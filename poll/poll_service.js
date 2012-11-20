@@ -30,7 +30,7 @@ var handler = {
     console.log("Beginning to track: %s with options %s", keyword, options);
     redisClient.sadd("tracking", keyword);
 
-    this.streams[keyword] = this.twitter.stream('statuses/filter', {'track': keyword}, function(stream) {
+    this.streams[keyword] = this.twitter.stream('statuses/filter', { 'track': keyword }, function(stream) {
       stream.on('error', function(error, crap) {
         console.log(error);
         console.log(crap);
@@ -38,18 +38,28 @@ var handler = {
 
       stream.on('data', function(data) {
         var text = data.text;
-        var user = data.user;
         for (var i = 0; i < options.length; ++i) {
           var option = options[i];
           if (text.match(option)) {
-            var key = keyword+":"+option;
-            var x = function (k, opt) {
-              redisClient.incr(key, function(err, rv) {
-                for (l in handler.listeners) {
-                  handler.listeners[l]({keyword: k, option: opt, count: rv});
-                }
+            var x = function (k, user, opt) {
+              var key = k+":"+opt;
+              var userKey = k+":"+user.id;
+
+              redisClient.watch(userKey, function(err, rv) {
+                redisClient.get(userKey, function(err, rv) {
+                  if (rv != opt) {
+                    var multi = redisClient.multi();
+                    multi.incr(key, function(err, rv) {
+                      for (l in handler.listeners) {
+                        handler.listeners[l]({keyword: k, option: opt, count: rv});
+                      }
+                    });
+                    multi.set(userKey, opt, function(err, rv) { });
+                    multi.exec(function(err, replies) {});
+                  }
+                });
               });
-            }(keyword, option);
+            }(keyword, data.user, option);
           }
         }
       });
