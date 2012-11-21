@@ -28,7 +28,6 @@ var handler = {
 
   track: function(keyword, options) {
     console.log("Beginning to track: %s with options %s", keyword, options);
-    redisClient.sadd("tracking", keyword);
 
     this.streams[keyword] = this.twitter.stream('statuses/filter', { 'track': keyword }, function(stream) {
       stream.on('error', function(error, crap) {
@@ -49,6 +48,11 @@ var handler = {
                 redisClient.get(userKey, function(err, rv) {
                   if (rv != opt) {
                     var multi = redisClient.multi();
+                    if (rv != null) {
+                      var oldKey = k+":"+rv;
+                      multi.decr(oldKey, function(err, rv) { });
+                    }
+
                     multi.incr(key, function(err, rv) {
                       for (l in handler.listeners) {
                         handler.listeners[l]({keyword: k, option: opt, count: rv});
