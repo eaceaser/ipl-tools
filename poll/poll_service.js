@@ -7,6 +7,8 @@ var CONFIG    = require('config')
   , server    = http.createServer(app)
   , io        = require('socket.io').listen(server);
 
+var NAMESPACE="poll:";
+
 io.set('log level', 2);
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
@@ -30,26 +32,22 @@ var handler = {
     console.log("Beginning to track: %s with options %s", keyword, options);
 
     this.streams[keyword] = this.twitter.stream('statuses/filter', { 'track': keyword }, function(stream) {
-      stream.on('error', function(error, crap) {
-        console.log(error);
-        console.log(crap);
-      });
-
+      stream.on('error', function(error, crap) { console.log(error + " " + crap); });
       stream.on('data', function(data) {
         var text = data.text;
         for (var i = 0; i < options.length; ++i) {
           var option = options[i];
           if (text.match(option)) {
             var x = function (k, user, opt) {
-              var key = k+":"+opt;
-              var userKey = k+":"+user.id;
+              var key = NAMESPACE+k+":"+opt;
+              var userKey = NAMESPACE+k+":users:"+user.id;
 
               redisClient.watch(userKey, function(err, rv) {
                 redisClient.get(userKey, function(err, rv) {
                   if (rv != opt) {
                     var multi = redisClient.multi();
                     if (rv != null) {
-                      var oldKey = k+":"+rv;
+                      var oldKey = NAMESPACE+k+":"+rv;
                       multi.decr(oldKey, function(err, rv) { });
                     }
 
@@ -71,12 +69,10 @@ var handler = {
   },
 
   forget: function(keyword) {
-    // end tracking new keyword
     client = self.streams[keyword];
     if (client) {
       client.destroy
       self.streams[keyword] = null;
-      redisClient.srem("tracking", keyword);
     }
   },
 
@@ -93,7 +89,7 @@ io.sockets.on('connection', function (socket) {
   };
 
   socket.on('disconnect', function() {
-    delete handler.listeners[socket]
+    delete handler.listeners[socket];
   });
 });
 
@@ -106,6 +102,12 @@ app.post('/track', function(req, res) {
   handler.track(kw, options);
 
   // TODO: Block until the twitter client establishes conn, return value as such.
+  res.json("ok");
+});
+
+app.post('/forget', function(req, res) {
+  var kw = req.body.keyword;
+  handler.forget(kw);
   res.json("ok");
 });
 
