@@ -23,8 +23,6 @@ function submitForm() {
   return false;
 }
 
-$.post('/track', {track: 'win,lose'});
-
 var socket = io.connect('http://localhost:8086');
 var smoothie = new SmoothieChart();
 var crap = new TimeSeries();

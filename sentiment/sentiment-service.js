@@ -35,7 +35,7 @@ var handler = {
   stream: null,
   listeners: [],
   currentKeywords: [],
-  weight: 0.0,
+  samples: [],
 
   addListener: function(socket) {
     this.listeners[socket.id] = function(message) {
@@ -72,6 +72,8 @@ var handler = {
         }
 
         var text = data.text;
+        console.log(text);
+        var ts = Date.parse(data.created_at);
         var classified = classifier.getClassifications(text);
         var values = [];
         for (var i in classified) {
@@ -80,23 +82,28 @@ var handler = {
         }
 
         var label = null;
-        var cnt = 0;
         if (values['win'] > values['lose'])  {
           label = "win";
-          if (handler.weight < 1) {
-            handler.weight += .01;
-          }
+          handler.samples.push(1);
         } else if (values['lose'] > values['win']) {
           label = "lose";
-          if (handler.weight > -1) {
-            handler.weight -= .01;
-          }
+          handler.samples.push(-1);
         }
+
+        if (handler.samples.length > 100) {
+          handler.samples.shift();
+        }
+
+        var sum = 0;
+        for (i in handler.samples) {
+          sum += handler.samples[i];
+        }
+        var avg = sum / handler.samples.length;
 
         if (label != null) {
           for (i in handler.listeners) {
             var l = handler.listeners[i];
-            l({keyword: "x", value: handler.weight * 100});
+            l({keyword: "x", value: avg * 100});
           }
         }
       });
