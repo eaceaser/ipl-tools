@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sentiment Analysis Proof of Concept</title>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">
+    <script src='http://code.jquery.com/jquery-1.8.2.min.js'></script>
+    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script src='/socket.io/socket.io.js'></script>
+    <script src='smoothie.js'></script>
+    <style>
+      body { 
+        font-family: "Helvetica Neue", sans-serif;
+        padding-top: 60px; 
+      }
+    </style>
+    <script>
+function submitForm() {
+  var data = $('#add').serialize();
+  $.post('/track', data).success(function() {
+    $('#feedback').append('<div class="alert"><button type="button" class="close" data-dismiss="alert">x</button>Successfully Added.</div>');
+    $('#track').val('');
+  });
+  return false;
+}
+
+$.post('/track', {track: 'win,lose'});
+
+var socket = io.connect('http://localhost:8086');
+var smoothie = new SmoothieChart();
+var crap = new TimeSeries();
+smoothie.addTimeSeries(crap, { lineWidth: 0 });
+crap.append(new Date().getTime(), 100);
+
+var crap2 = new TimeSeries();
+smoothie.addTimeSeries(crap2, { lineWidth: 0 });
+crap2.append(new Date().getTime(), -100);
+
+var handler = {
+  socket: socket,
+  timeseries: [],
+  chart: smoothie,
+
+  handleSentiment: function(data) {
+    var kw = data.keyword;
+    var val = data.value;
+
+    var ts = null;
+    if (this.timeseries[kw]) {
+      ts = this.timeseries[kw];
+    } else {
+      ts = new TimeSeries();
+      this.timeseries[kw] = ts;
+      this.chart.addTimeSeries(ts, {
+        lineWidth: 3,
+        fillStyle: 'rgba(0, 255, 0, 0.4)'
+      });
+    }
+
+    ts.append(new Date().getTime(), val);
+  }
+};
+
+socket.on('sentiment', function(data) {
+  handler.handleSentiment(data);
+});
+
+    </script>
+  </head>
+
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Sentiment Analysis Demo</a>
+        </div>
+      </div>
+    </div>
+    <div class='container'>
+      <div class='row'>
+        <div class='span3'>
+          <div id='feedback'></div>
+          <form id='add' onsubmit='submitForm()'>
+            <fieldset>
+              <legend>Open a new stream</legend>
+              <input type="text" id="track" name="track" placeHolder="Track Query">
+              <button type='button' class='btn' onclick='submitForm()'>Add</button>
+            </fieldset>
+          </form>
+        </div>
+        <div class='span9'>
+          <h1>Tracking</h1>
+          <canvas id="graph" width="800", height="300"></canvas>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+smoothie.streamTo(document.getElementById('graph'), 1000);
+  </script>
+</html>
