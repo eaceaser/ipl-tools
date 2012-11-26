@@ -48,6 +48,8 @@ var handler = {
   track: function(track) {
     var kws = track.split(/,/);
     handler.currentKeywords = kws;
+    handler.samples = [];
+
     for (l in handler.listeners) {
       list = handler.listeners[l];
       list.emit('keyword', { keywords: kws });
@@ -93,23 +95,27 @@ var handler = {
           }
 
           var label = null;
-          if (values['positive'] > values['negative'])  {
-            label = "positive";
-            handler.samples.push(1);
-          } else if (values['negative'] > values['positive']) {
-            label = "negative";
-            handler.samples.push(-1);
+          if (handler.samples[keyword] == null) {
+            handler.samples[keyword] = [];
           }
 
-          if (handler.samples.length > 100) {
-            handler.samples.shift();
+          if (values['positive'] > values['negative'])  {
+            label = "positive";
+            handler.samples[keyword].push(1);
+          } else if (values['negative'] > values['positive']) {
+            label = "negative";
+            handler.samples[keyword].push(-1);
+          }
+
+          if (handler.samples[keyword].length > 100) {
+            handler.samples[keyword].shift();
           }
 
           var sum = 0;
-          for (i in handler.samples) {
-            sum += handler.samples[i];
+          for (i in handler.samples[keyword]) {
+            sum += handler.samples[keyword][i];
           }
-          var avg = sum / handler.samples.length;
+          var avg = sum / handler.samples[keyword].length;
 
           if (label != null) {
             console.log(text);
