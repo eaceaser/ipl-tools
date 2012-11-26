@@ -38,20 +38,21 @@ var handler = {
   samples: [],
 
   addListener: function(socket) {
-    this.listeners[socket.id] = function(message) {
-      socket.emit('sentiment', message);
-    };
+    this.listeners[socket.id] = socket;
   },
 
   removeListener: function(socket) {
-    delete this.listeners[socket];
+    delete this.listeners[socket.id];
   },
 
   track: function(track) {
     var kws = track.split(/,/);
-    kws.map(function(kw) {
-      handler.currentKeywords.push(kw);
-    });
+    handler.currentKeywords = kws;
+    for (l in handler.listeners) {
+      list = handler.listeners[l];
+      list.emit('keyword', { keywords: kws });
+    }
+
     var query = this.currentKeywords.join(",");
 
     console.log("Opening stream with track: %s", query);
@@ -103,7 +104,7 @@ var handler = {
         if (label != null) {
           for (i in handler.listeners) {
             var l = handler.listeners[i];
-            l({keyword: "x", value: avg * 100});
+            l.emit('sentiment', {keyword: "x", value: avg * 100});
           }
         }
       });
@@ -132,6 +133,10 @@ app.post('/track', function(req, res) {
   var query = req.body.track;
   handler.track(query);
   res.json("ok");
+});
+
+app.get('/tracking', function(req, res) {
+  res.json( { keywords: handler.currentKeywords });
 });
 
 app.get('/', function(req, res) { res.static('index.html'); });

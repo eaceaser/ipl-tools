@@ -23,6 +23,14 @@ function submitForm() {
   return false;
 }
 
+$.get('/tracking').success(function(data) {
+  var t = $('#tracking');
+  for (i in data.keywords) {
+    var kw = data.keywords[i];
+    t.append('<span id="keyword-'+kw+'" class="label">'+kw+'</span>');
+  }
+});
+
 var socket = io.connect('http://localhost:8086');
 var smoothie = new SmoothieChart();
 var crap = new TimeSeries();
@@ -62,6 +70,15 @@ socket.on('sentiment', function(data) {
   handler.handleSentiment(data);
 });
 
+socket.on('keyword', function(data) {
+  var kw = data.keywords;
+  $('#tracking').html("");
+  for (i in data.keywords) {
+    var kw = data.keywords[i];
+    $('#tracking').append('<span id="keyword-'+kw+'" class="label">'+kw+'</span>');
+  }
+});
+
     </script>
   </head>
 
@@ -77,6 +94,8 @@ socket.on('sentiment', function(data) {
       <div class='row'>
         <div class='span3'>
           <div id='feedback'></div>
+          <h4>Currently Tracking</h4>
+          <div id='tracking'></div>
           <form id='add' onsubmit='submitForm()'>
             <fieldset>
               <legend>Open a new stream</legend>
@@ -86,7 +105,6 @@ socket.on('sentiment', function(data) {
           </form>
         </div>
         <div class='span9'>
-          <h1>Tracking</h1>
           <canvas id="graph" width="800", height="300"></canvas>
         </div>
       </div>
