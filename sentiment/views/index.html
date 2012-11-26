@@ -122,8 +122,7 @@ socket.on('sentiment', function(data) {
 });
 
 socket.on('keyword', function(data) {
-  var kw = data.keywords;
-  handler.setKeywords(keywords);
+  handler.setKeywords(data.keywords);
 });
 
     </script>
