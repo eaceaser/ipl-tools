@@ -26,7 +26,7 @@ var twitter = new ntwitter({
 
 // Train
 classifier.addDocument(['win', 'ftw', 'good', 'snowball', 'pro', 'gosu', 'pro', 'excellent', 'leet', 'elite'], 'positive');
-classifier.addDocument(['lose', 'ftl', 'throw', 'choke', 'sucks', 'terrible', 'bad', 'l2p', 'derp', 'noob', 'chobo', 'nub', 'newbie', 'dead', 'shit'], 'negative');
+classifier.addDocument(['lose', 'ftl', 'throw', 'choke', 'sucks', 'terrible', 'scrub', 'bad', 'l2p', 'derp', 'noob', 'chobo', 'nub', 'newbie', 'dead', 'shit'], 'negative');
 classifier.train();
 
 var handler = {
