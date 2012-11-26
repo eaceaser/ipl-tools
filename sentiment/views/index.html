@@ -94,13 +94,13 @@ socket.on('keyword', function(data) {
       <div class='row'>
         <div class='span3'>
           <div id='feedback'></div>
-          <h4>Currently Tracking</h4>
+          <legend>Currently Tracking</legend>
           <div id='tracking'></div>
           <form id='add' onsubmit='submitForm()'>
             <fieldset>
               <legend>Open a new stream</legend>
               <input type="text" id="track" name="track" placeHolder="Track Query">
-              <button type='button' class='btn' onclick='submitForm()'>Add</button>
+              <button type='submit' class='btn' onclick='submitForm()'>Open</button>
             </fieldset>
           </form>
         </div>

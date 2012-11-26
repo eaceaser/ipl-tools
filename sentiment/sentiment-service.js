@@ -16,7 +16,7 @@ app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.static(__dirname + '/views'));
 
-var redisClient = redis.createClient();
+//var redisClient = redis.createClient();
 var twitter = new ntwitter({
   consumer_key: CONFIG.auth.consumer_key,
   consumer_secret: CONFIG.auth.consumer_secret,
@@ -25,13 +25,13 @@ var twitter = new ntwitter({
 });
 
 // Train
-classifier.addDocument(['win', 'good', 'pro', 'gosu', 'pro', 'leet', 'elite'], 'win');
-classifier.addDocument(['lose', 'sucks', 'bad', 'l2p', 'derp', 'noob', 'chobo', 'nub', 'newbie', 'dead', 'shit'], 'lose');
+classifier.addDocument(['win', 'ftw', 'good', 'snowball', 'pro', 'gosu', 'pro', 'excellent', 'leet', 'elite'], 'positive');
+classifier.addDocument(['lose', 'ftl', 'throw', 'choke', 'sucks', 'terrible', 'bad', 'l2p', 'derp', 'noob', 'chobo', 'nub', 'newbie', 'dead', 'shit'], 'negative');
 classifier.train();
 
 var handler = {
   twitter: twitter,
-  redis: redisClient,
+//  redis: redisClient,
   stream: null,
   listeners: [],
   currentKeywords: [],
@@ -73,7 +73,6 @@ var handler = {
         }
 
         var text = data.text;
-        console.log(text);
         var ts = Date.parse(data.created_at);
         var classified = classifier.getClassifications(text);
         var values = [];
@@ -83,11 +82,11 @@ var handler = {
         }
 
         var label = null;
-        if (values['win'] > values['lose'])  {
-          label = "win";
+        if (values['positive'] > values['negative'])  {
+          label = "positive";
           handler.samples.push(1);
-        } else if (values['lose'] > values['win']) {
-          label = "lose";
+        } else if (values['negative'] > values['positive']) {
+          label = "negative";
           handler.samples.push(-1);
         }
 
