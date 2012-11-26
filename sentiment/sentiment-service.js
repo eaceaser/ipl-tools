@@ -73,37 +73,50 @@ var handler = {
         }
 
         var text = data.text;
-        var ts = Date.parse(data.created_at);
-        var classified = classifier.getClassifications(text);
-        var values = [];
-        for (var i in classified) {
-          var c = classified[i];
-          values[c.label] = c.value;
+
+        var keyword = null;
+        for (var i in handler.currentKeywords) {
+          var kw = handler.currentKeywords[i];
+          if (text.match(kw)) {
+            keyword = kw;
+            break;
+          }
         }
 
-        var label = null;
-        if (values['positive'] > values['negative'])  {
-          label = "positive";
-          handler.samples.push(1);
-        } else if (values['negative'] > values['positive']) {
-          label = "negative";
-          handler.samples.push(-1);
-        }
+        if (keyword) {
+          var ts = Date.parse(data.created_at);
+          var classified = classifier.getClassifications(text);
+          var values = [];
+          for (var i in classified) {
+            var c = classified[i];
+            values[c.label] = c.value;
+          }
 
-        if (handler.samples.length > 100) {
-          handler.samples.shift();
-        }
+          var label = null;
+          if (values['positive'] > values['negative'])  {
+            label = "positive";
+            handler.samples.push(1);
+          } else if (values['negative'] > values['positive']) {
+            label = "negative";
+            handler.samples.push(-1);
+          }
 
-        var sum = 0;
-        for (i in handler.samples) {
-          sum += handler.samples[i];
-        }
-        var avg = sum / handler.samples.length;
+          if (handler.samples.length > 100) {
+            handler.samples.shift();
+          }
 
-        if (label != null) {
-          for (i in handler.listeners) {
-            var l = handler.listeners[i];
-            l.emit('sentiment', {keyword: "x", value: avg * 100});
+          var sum = 0;
+          for (i in handler.samples) {
+            sum += handler.samples[i];
+          }
+          var avg = sum / handler.samples.length;
+
+          if (label != null) {
+            console.log(text);
+            for (i in handler.listeners) {
+              var l = handler.listeners[i];
+              l.emit('sentiment', {keyword: keyword, value: avg * 100});
+            }
           }
         }
       });

@@ -24,12 +24,32 @@ function submitForm() {
 }
 
 $.get('/tracking').success(function(data) {
-  var t = $('#tracking');
-  for (i in data.keywords) {
-    var kw = data.keywords[i];
-    t.append('<span id="keyword-'+kw+'" class="label">'+kw+'</span>');
-  }
+  handler.setKeywords(data.keywords);
 });
+
+var COLORS = [ "grey", "green", "orange", "red", "blue" ];
+var LABEL_COLORS = {
+  "grey": "",
+  "green": "label-success",
+  "orange": "label-warning",
+  "red": "label-red",
+  "blue": "label-info"
+};
+var LINE_COLORS = {
+  "grey": "rgb(153,153,153)",
+  "green": "rgb(70,136,71)",
+  "orange": "rgb(248,148,6)",
+  "red": "rgb(185,74,72)",
+  "blue": "rgb(58,135,173)"
+};
+var FILL_COLORS = {
+  "grey": "rgba(153,153,153,0.4)",
+  "green": "rgba(70,136,71,0.4)",
+  "orange": "rgba(248,148,6,0.4)",
+  "red": "rgba(185,74,72,0.4)",
+  "blue": "rgba(58,135,173,0.4)"
+};
+
 
 var socket = io.connect('http://localhost:8086');
 var smoothie = new SmoothieChart();
@@ -44,7 +64,27 @@ crap2.append(new Date().getTime(), -100);
 var handler = {
   socket: socket,
   timeseries: [],
+  keywords: [],
   chart: smoothie,
+  colorIndex: 0,
+
+  setKeywords: function(keywords) {
+    $('#tracking').html("");
+    for (i in keywords) {
+      var kw = keywords[i];
+
+      var color = null;
+      if (this.keywords[kw]) {
+        color = this.keywords[kw];
+      } else {
+        color = COLORS[this.colorIndex];
+        this.keywords[kw] = color;
+        this.colorIndex = (this.colorIndex + 1) % COLORS.length;
+      }
+
+      $('#tracking').append('<span id="keyword-'+kw+'" class="label '+LABEL_COLORS[color]+'">'+kw+'</span>');
+    }
+  },
 
   handleSentiment: function(data) {
     var kw = data.keyword;
@@ -56,9 +96,20 @@ var handler = {
     } else {
       ts = new TimeSeries();
       this.timeseries[kw] = ts;
+
+      var color = null;
+      if (this.keywords[kw]) {
+        color = this.keywords[kw];
+      } else {
+        color = COLORS[this.colorIndex];
+        this.keywords[kw] = color;
+        this.colorIndex = (this.colorIndex + 1) % COLORS.length;
+      }
+
       this.chart.addTimeSeries(ts, {
         lineWidth: 3,
-        fillStyle: 'rgba(0, 255, 0, 0.4)'
+        strokeStyle: LINE_COLORS[color],
+        fillStyle: FILL_COLORS[color]
       });
     }
 
@@ -72,11 +123,7 @@ socket.on('sentiment', function(data) {
 
 socket.on('keyword', function(data) {
   var kw = data.keywords;
-  $('#tracking').html("");
-  for (i in data.keywords) {
-    var kw = data.keywords[i];
-    $('#tracking').append('<span id="keyword-'+kw+'" class="label">'+kw+'</span>');
-  }
+  handler.setKeywords(keywords);
 });
 
     </script>
@@ -96,7 +143,7 @@ socket.on('keyword', function(data) {
           <div id='feedback'></div>
           <legend>Currently Tracking</legend>
           <div id='tracking'></div>
-          <form id='add' onsubmit='submitForm()'>
+          <form id='add'>
             <fieldset>
               <legend>Open a new stream</legend>
               <input type="text" id="track" name="track" placeHolder="Track Query">
