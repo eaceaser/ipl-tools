@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Poll Test App</title>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">
+    <script src='http://code.jquery.com/jquery-1.8.2.min.js'></script>
+    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script src='/socket.io/socket.io.js'></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script type='text/javascript'>
+      var socket = io.connect("http://localhost:8085");
+      var currentData = [];
+
+      socket.on('vote', function(data) {
+        var polls = $('#polls')
+        var keyword = data.keyword.replace(/([#])/g,'\\$1');
+        if (polls.find($('#'+keyword)).length == 0) {
+          polls.append($('<div id="'+data.keyword+'">')).addClass("poll");
+
+          var poll = $('#'+keyword);
+          var rv = poll.append('<h2>'+data.keyword+'</h2>');
+
+          var chart = d3.select("#"+keyword).append("svg")
+            .attr("label", data.keyword+"_chart")
+            .attr("class", "chart")
+            .attr("width", 480)
+            .attr("height", 60);
+        }
+
+        var poll = $('#'+keyword);
+
+        currentData[data.option] = data.count;
+
+        var ordinal = [];
+        var max = 0;
+        for (var key in currentData.sort()) {
+          if (currentData[key] > max) {
+            max = currentData[key];
+          }
+          ordinal.push(currentData[key]);
+        }
+
+        var chart = d3.selectAll("svg")
+        var rect = chart.selectAll("rect")
+
+        rect.data(ordinal)
+          .enter().append("rect")
+            .attr("class", "chart")
+            .attr("x", 0)
+            .attr("y", function(d, i) { return 20*i;})
+            .attr("height", "20")
+            .attr("width", function(d) { 
+              return 480*(d/max);
+            })
+
+        rect.transition()
+          .duration(250)
+          .attr("width", function(m) { return function(d) { return 480*(d/m); } }(max));
+
+
+        var text = chart.selectAll("text")
+        text.data(ordinal)
+          .enter().append("text")
+          .text(function(d) { return d; })
+          .attr("x", function(d,i) { return 430*(d/max); })
+          .attr("y", function (d,i) { return 20*(i+.5); })
+          .attr("dx", -3)
+          .attr("dy", ".35em")
+          .attr("fill", "white");
+
+        var keys = [];
+        for (var k in currentData.sort()) { keys.push(k); }
+
+        text.data(keys)
+          .enter().append("text")
+          .text(function(d) { d } )
+          .attr("x", function (d, i) { return 0; })
+          .attr("y", function (d, i) { return 20*(i+.5); });
+          .attr("fill", "black");
+
+        text.transition()
+          .text(function(d) { return d; })
+          .duration(250)
+          .attr("x", function(d,i) { return 430*(d/max); });
+
+
+        var opt = data.option;
+        if (poll.find($("#"+opt)).length == 0) {
+          poll.append($('<div id="'+data.option+'">')).addClass("option");
+        }
+
+        var optSel = $("#"+data.option);
+        optSel.text(opt + ": "+data.count);
+      });
+
+
+      function checkIfTextExists() {
+        var lastInput = $(".lastoption");
+        if (lastInput.val().length > 0) {
+          $("#next").replaceWith('<input type="text" name="option" class="lastoption" onChange="checkIfTextExists();" placeholder="Add an Option"><div id="next"></div>');
+        }
+        lastInput.removeClass("lastoption");
+      }
+
+      function submitForm() {
+        var data = $('#pollAdd').serialize();
+        $.post('/track', data).success(function() {
+          $('#feedback').append('<div class="alert"><button type="button" class="close" data-dismiss="alert">x</button>Poll Successfully Added.</div>');
+          $('#formKeyword').val('');
+          $('#options').replaceWith('\
+          <div id="options">\
+            <input type="text" name="option" class="lastoption" onChange="checkIfTextExists();" placeholder="Add an Option">\
+            <div id="next"></div>\
+          </div>\
+          ');
+        });
+        return false;
+      }
+    </script>
+    <style>
+      body { padding-top: 60px; }
+
+      .chart rect {
+        stroke: white;
+        fill: steelblue;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">IPL Poll Demo</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class='container'>
+      <div class='row'>
+        <div class="span3">
+          <div id='feedback'/></div>
+          <form id='pollAdd'>
+            <fieldset>
+              <legend>Add a Poll</legend>
+              <input type="text" id="formKeyword" name="keyword" placeholder="Twitter Keyword">
+              <div id="options">
+                <input type="text" name="option" class="lastoption" onChange="checkIfTextExists();" placeholder="Add an Option">
+                <div id="next"></div>
+              </div>
+              <button type='button' class="btn" onclick='submitForm()'>Add Poll</button>
+            </fieldset>
+          </form>
+        </div>
+        <div class="span9">
+          <h1>Polls</h1>
+          <div id='polls'></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
