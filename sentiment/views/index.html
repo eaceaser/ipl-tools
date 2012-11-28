@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sentiment Analysis Proof of Concept</title>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">
+    <script src='http://code.jquery.com/jquery-1.8.2.min.js'></script>
+    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script src='/socket.io/socket.io.js'></script>
+    <script src='smoothie.js'></script>
+    <style>
+      body { 
+        font-family: "Helvetica Neue", sans-serif;
+        padding-top: 60px; 
+      }
+    </style>
+    <script>
+function submitForm() {
+  var data = $('#add').serialize();
+  $.post('/track', data).success(function() {
+    $('#feedback').append('<div class="alert"><button type="button" class="close" data-dismiss="alert">x</button>Successfully Added.</div>');
+    $('#track').val('');
+  });
+  return false;
+}
+
+$.get('/tracking').success(function(data) {
+  handler.setKeywords(data.keywords);
+});
+
+var COLORS = [ "grey", "green", "orange", "red", "blue" ];
+var LABEL_COLORS = {
+  "grey": "",
+  "green": "label-success",
+  "orange": "label-warning",
+  "red": "label-red",
+  "blue": "label-info"
+};
+var LINE_COLORS = {
+  "grey": "rgb(153,153,153)",
+  "green": "rgb(70,136,71)",
+  "orange": "rgb(248,148,6)",
+  "red": "rgb(185,74,72)",
+  "blue": "rgb(58,135,173)"
+};
+var FILL_COLORS = {
+  "grey": "rgba(153,153,153,0.4)",
+  "green": "rgba(70,136,71,0.4)",
+  "orange": "rgba(248,148,6,0.4)",
+  "red": "rgba(185,74,72,0.4)",
+  "blue": "rgba(58,135,173,0.4)"
+};
+
+
+var socket = io.connect('http://localhost:8086');
+var smoothie = new SmoothieChart();
+var crap = new TimeSeries();
+smoothie.addTimeSeries(crap, { lineWidth: 0 });
+crap.append(new Date().getTime(), 100);
+
+var crap2 = new TimeSeries();
+smoothie.addTimeSeries(crap2, { lineWidth: 0 });
+crap2.append(new Date().getTime(), -100);
+
+var handler = {
+  socket: socket,
+  timeseries: [],
+  keywords: [],
+  chart: smoothie,
+  colorIndex: 0,
+
+  setKeywords: function(keywords) {
+    $('#tracking').html("");
+    for (i in keywords) {
+      var kw = keywords[i];
+
+      var color = null;
+      if (this.keywords[kw]) {
+        color = this.keywords[kw];
+      } else {
+        color = COLORS[this.colorIndex];
+        this.keywords[kw] = color;
+        this.colorIndex = (this.colorIndex + 1) % COLORS.length;
+      }
+
+      $('#tracking').append('<span id="keyword-'+kw+'" class="label '+LABEL_COLORS[color]+'">'+kw+'</span>');
+    }
+  },
+
+  handleSentiment: function(data) {
+    var kw = data.keyword;
+    var val = data.value;
+
+    var ts = null;
+    if (this.timeseries[kw]) {
+      ts = this.timeseries[kw];
+    } else {
+      ts = new TimeSeries();
+      this.timeseries[kw] = ts;
+
+      var color = null;
+      if (this.keywords[kw]) {
+        color = this.keywords[kw];
+      } else {
+        color = COLORS[this.colorIndex];
+        this.keywords[kw] = color;
+        this.colorIndex = (this.colorIndex + 1) % COLORS.length;
+      }
+
+      this.chart.addTimeSeries(ts, {
+        lineWidth: 3,
+        strokeStyle: LINE_COLORS[color],
+        fillStyle: FILL_COLORS[color]
+      });
+    }
+
+    ts.append(new Date().getTime(), val);
+  }
+};
+
+socket.on('sentiment', function(data) {
+  handler.handleSentiment(data);
+});
+
+socket.on('keyword', function(data) {
+  handler.setKeywords(data.keywords);
+});
+
+    </script>
+  </head>
+
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Sentiment Analysis Demo</a>
+        </div>
+      </div>
+    </div>
+    <div class='container'>
+      <div class='row'>
+        <div class='span3'>
+          <div id='feedback'></div>
+          <legend>Currently Tracking</legend>
+          <div id='tracking'></div>
+          <form id='add'>
+            <fieldset>
+              <legend>Open a new stream</legend>
+              <input type="text" id="track" name="track" placeHolder="Track Query">
+              <button type='submit' class='btn' onclick='submitForm()'>Open</button>
+            </fieldset>
+          </form>
+        </div>
+        <div class='span9'>
+          <canvas id="graph" width="800", height="300"></canvas>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+smoothie.streamTo(document.getElementById('graph'), 1000);
+  </script>
+</html>

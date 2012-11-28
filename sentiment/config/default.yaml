@@ -1,0 +1,5 @@
+auth:
+  consumer_key: insert
+  consumer_secret: ya
+  access_token_key: access
+  access_token_secret: tokenz
